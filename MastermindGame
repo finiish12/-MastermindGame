@@ -1,0 +1,114 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
+ */
+package mastermindgame;
+
+import java.util.*;
+
+// Abstract class for Mastermind Game
+abstract class MastermindGame {
+    protected int codeLength = 4;
+    protected List<String> colors = Arrays.asList("Red", "Blue", "Green", "Yellow", "White", "Black");
+    protected List<String> secretCode = new ArrayList<>();
+
+    // Method to generate the secret code
+    protected abstract void generateSecretCode();
+
+    // Method to evaluate a guess
+    protected abstract Map<String, Integer> evaluateGuess(List<String> guess);
+}
+
+// Concrete implementation of Mastermind
+class Mastermind extends MastermindGame {
+
+    public Mastermind() {
+        generateSecretCode();
+    }
+
+    @Override
+    protected void generateSecretCode() {
+        Random random = new Random();
+        for (int i = 0; i < codeLength; i++) {
+            secretCode.add(colors.get(random.nextInt(colors.size())));
+        }
+    }
+
+    @Override
+    protected Map<String, Integer> evaluateGuess(List<String> guess) {
+        int correctPosition = 0;
+        int correctColor = 0;
+
+        List<String> secretCodeCopy = new ArrayList<>(secretCode);
+        List<String> guessCopy = new ArrayList<>(guess);
+
+        // Check for correct positions
+        for (int i = 0; i < codeLength; i++) {
+            if (guessCopy.get(i).equals(secretCodeCopy.get(i))) {
+                correctPosition++;
+                secretCodeCopy.set(i, null);
+                guessCopy.set(i, null);
+            }
+        }
+
+        // Check for correct colors in incorrect positions
+        for (int i = 0; i < codeLength; i++) {
+            if (guessCopy.get(i) != null && secretCodeCopy.contains(guessCopy.get(i))) {
+                correctColor++;
+                secretCodeCopy.set(secretCodeCopy.indexOf(guessCopy.get(i)), null);
+            }
+        }
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("CorrectPosition", correctPosition);
+        result.put("CorrectColor", correctColor);
+        return result;
+    }
+
+    // Method to display the secret code (for debugging or end of the game)
+    public void displaySecretCode() {
+        System.out.println("Secret Code: " + secretCode);
+    }
+}
+
+public class MastermindGameApp {
+    public static void main(String[] args) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            Mastermind mastermind = new Mastermind();
+            
+            System.out.println("Welcome to Mastermind!");
+            System.out.println("Available colors: Red, Blue, Green, Yellow, White, Black");
+            System.out.println("Try to guess the secret code of length 4.");
+            
+            boolean isGameWon = false;
+            int attempts = 0;
+            while (attempts < 10 && !isGameWon) {
+                attempts++;
+                System.out.println("\nAttempt " + attempts + ": Enter your guess (e.g., Red Blue Green Yellow):");
+                String input = scanner.nextLine();
+                List<String> guess = Arrays.asList(input.split(" "));
+                
+                if (guess.size() != 4) {
+                    System.out.println("Invalid input. Please enter exactly 4 colors.");
+                    attempts--;
+                    continue;
+                }
+                
+                Map<String, Integer> feedback = mastermind.evaluateGuess(guess);
+                System.out.println("Correct Colors in Correct Positions: " + feedback.get("CorrectPosition"));
+                System.out.println("Correct Colors in Incorrect Positions: " + feedback.get("CorrectColor"));
+                
+                if (feedback.get("CorrectPosition") == 4) {
+                    isGameWon = true;
+                    System.out.println("Congratulations! You've cracked the code!");
+                }
+            }
+            
+            if (!isGameWon) {
+                System.out.println("You've run out of attempts. Better luck next time!");
+            }
+            
+            mastermind.displaySecretCode();
+        }
+    }
+}
